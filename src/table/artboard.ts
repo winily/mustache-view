@@ -1,10 +1,10 @@
-import utlis, { npx, thinLineWidth, npxLine } from '../lib/util'
+import utli, { npx, thinLineWidth, npxLine } from '../lib/util'
 import { Border, BorderBroad, BorderSide } from './model/border.type'
 import { Box } from './model/box.type'
 import Coordinate from './model/coordinate.type'
 import { Text } from './model/text.type'
 import Logger from '../lib/logger'
-import { emit } from '../lib/eventBus'
+import EventBus from '../lib/eventBus'
 import VirtualElement from '../lib/virtualElement'
 
 export default class Artboard extends VirtualElement<'canvas'> {
@@ -13,7 +13,8 @@ export default class Artboard extends VirtualElement<'canvas'> {
 
   constructor(
     public clientWidth: number,
-    public clientHeight: number
+    public clientHeight: number,
+    private readonly eventBus: EventBus
   ) {
     super('canvas', 'mustache-artboard')
     this.logger = new Logger()
@@ -33,7 +34,7 @@ export default class Artboard extends VirtualElement<'canvas'> {
     this.el.style.height = `${clientHeight}px`;
     this.clientWidth = clientWidth
     this.clientHeight = clientHeight
-    emit('artboard-resize', clientWidth, clientHeight)
+    this.eventBus.emit('artboard-resize', clientWidth, clientHeight)
     this.logger.log("Artboard window resize!", clientWidth, clientHeight)
     return this
   }
@@ -140,7 +141,7 @@ export default class Artboard extends VirtualElement<'canvas'> {
   }
 
   strokeBoxBorder(box: Box): Artboard {
-    utlis.assert(utlis.isDefined(box.border), "The border of the box must exist during strokeBoxBorder!")
+    utli.assert(utli.isDefined(box.border), "The border of the box must exist during strokeBoxBorder!")
     const border: Border = {
       top: {
         style: box.border?.style,
@@ -170,7 +171,7 @@ export default class Artboard extends VirtualElement<'canvas'> {
   strokeBox(box: Box): Artboard {
     this.context.fillStyle = box.backColor || "#fff"
     this.context.fillRect(npx(box.x), npx(box.y), npx(box.width), npx(box.height))
-    if (utlis.isDefined(box.border)) {
+    if (utli.isDefined(box.border)) {
       const border: Border = {
         top: {
           style: box.border?.style,

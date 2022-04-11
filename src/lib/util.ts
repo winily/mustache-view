@@ -1,25 +1,25 @@
 import lodash from "lodash"
 
 
-const utlis = {
+const utli = {
     dpr: (): number => window.devicePixelRatio || 1,
     npx(px: number): number {
-        return parseInt((px * utlis.dpr()).toString(), 10)
+        return parseInt((px * utli.dpr()).toString(), 10)
     },
     npxLine(px: number): number {
         const n = npx(px);
         return n !== 0 ? n - 0.5 : 0.5;
     },
     thinLineWidth(): number {
-        return utlis.dpr() - 0.5;
+        return utli.dpr() - 0.5;
     },
     px(npx: number) {
-        return parseInt((npx / utlis.dpr()).toString(), 10)
+        return parseInt((npx / utli.dpr()).toString(), 10)
     },
     createCanvas(boxDom: HTMLDivElement, width: number, height: number) {
         const canvasElement = document.createElement('canvas')
-        canvasElement.width = utlis.npx(width);
-        canvasElement.height = utlis.npx(height);
+        canvasElement.width = utli.npx(width);
+        canvasElement.height = utli.npx(height);
         boxDom.appendChild(canvasElement)
         const context = canvasElement.getContext("2d")
         return { el: canvasElement, context }
@@ -59,15 +59,15 @@ const utlis = {
     },
 
     isDiv(value: any) {
-        return utlis.getPrototype(value) === "HTMLDivElement";
+        return utli.getPrototype(value) === "HTMLDivElement";
     },
 
     isCanvas(value: any) {
-        return utlis.getPrototype(value) === "HTMLCanvasElement";
+        return utli.getPrototype(value) === "HTMLCanvasElement";
     },
 
     isImage(value: any) {
-        return utlis.getPrototype(value) === "HTMLImageElement";
+        return utli.getPrototype(value) === "HTMLImageElement";
     },
 
     assert(expression: boolean, error: Error | string) {
@@ -82,7 +82,7 @@ const utlis = {
             if (lodash.isFunction(initializers[key]))
                 value = initializers[key](value);
             if (lodash.isFunction(checkers[key]))
-                utlis.assert(checkers[key](value), `options property ${key} invalid`);
+                utli.assert(checkers[key](value), `options property ${key} invalid`);
             if (lodash.isUndefined(value))
                 return;
             if (lodash.isSymbol(that[key]) && !lodash.isSymbol(value))
@@ -90,14 +90,38 @@ const utlis = {
             that[key] = value;
         });
     },
+    deepProxy(proxyValue: any, callback: (value: { target: any, key: string, value: any }) => void) {
+        if (typeof proxyValue === 'object') {
+            for (let key in proxyValue) {
+                if (typeof proxyValue[key] === 'object')
+                    proxyValue[key] = utli.deepProxy(proxyValue[key], callback);
+            }
+        }
+        return new Proxy(proxyValue, {
+            /**
+             * @param {Object_Array} target 设置值的对象
+             * @param {String} key 属性
+             * @param {any} value 值
+             * @param {Object} receiver this
+             */
+            set: (target: any, key: string, value: any, receiver: object) => {
+                if (typeof value === 'object') value = utli.deepProxy(value, callback)
 
+                //排除数组修改length回调
+                !(Array.isArray(target) && key === 'length') && callback({ target, key, value })
+
+                return Reflect.set(target, key, value, receiver)
+            }
+        });
+
+    }
 };
 
-export default utlis
+export default utli
 
-export const npx = utlis.npx
-export const npxLine = utlis.npxLine
-export const thinLineWidth = utlis.thinLineWidth
+export const npx = utli.npx
+export const npxLine = utli.npxLine
+export const thinLineWidth = utli.thinLineWidth
 
 
 const alphabets = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];

@@ -1,17 +1,14 @@
 import lodash from 'lodash'
-import utli, { xy2expr } from '../lib/util'
+import { xy2expr } from '../lib/util'
 import Artboard from './artboard'
-import Scrollbar from './scrollbar'
 import SheetData from './model/sheet.data'
 import Options from './options'
 import Cell, { Cells } from './cell'
 import CellData from './model/cell.data'
 import SlideWindow from './slideWindow'
 import VirtualElement from '../lib/virtualElement'
-import { emit } from '../lib/eventBus'
+import EventBus from '../lib/eventBus'
 import Input from './input'
-
-
 
 
 export default class Sheet extends VirtualElement<'div'> {
@@ -23,6 +20,7 @@ export default class Sheet extends VirtualElement<'div'> {
 
   constructor(
     private readonly sheetData: SheetData,
+    private readonly eventBus: EventBus,
     private readonly options: Options
   ) {
     super('div', 'mustache-sheet')
@@ -32,7 +30,7 @@ export default class Sheet extends VirtualElement<'div'> {
   }
 
   render(): Sheet {
-    this.artboard = new Artboard(this.el.clientWidth, this.el.clientHeight)
+    this.artboard = new Artboard(this.el.clientWidth, this.el.clientHeight, this.eventBus)
     this.child(this.artboard)
     this.el.addEventListener("click", e => this.click(e))
     this.on("mousewheel", (evt: Event) => this.mousewheel(evt))
@@ -42,6 +40,7 @@ export default class Sheet extends VirtualElement<'div'> {
       this.artboard,
       this.sheetData,
       this.data,
+      this.eventBus,
       this.options
     )
     return this
@@ -76,13 +75,9 @@ export default class Sheet extends VirtualElement<'div'> {
     let offsetY = wheelDeltaY === 0 ? 0 : wheelDeltaY < 0 ? 1 : -1;
     this.slideWindow!.slide(offsetX, offsetY)
   }
-  // mousewheel() {
-  //   return lodash.throttle((event: WheelEvent | any) => this.sheet?.mousewheel(event), 80)
-  // }
-
 
   click(event: Event) {
-    emit('table-click', event)
+    this.eventBus.emit('table-click', event)
   }
 
   observerSize() {
@@ -91,28 +86,17 @@ export default class Sheet extends VirtualElement<'div'> {
     const resize = lodash.debounce(() => {
       this.artboard!.resize(this.el.clientWidth, this.el.clientHeight - 42)
     }, 50)
-
-    // 检测 dom 大小变化
-    // new MutationObserver((mutations, observer) => {
-    //   console.log(mutations, "mutations", observer)
-    //   mutations.forEach(resize);
-    // }).observe(this.el, {
-    //   attributes: true,
-    //   attributeOldValue: true,
-    //   attributeFilter: ['style']
-    // })
-    // 检测 window resize
     window.addEventListener('resize', resize)
   }
-
 
   private initData(): Cells {
     const data: Cells = {}
     for (let rowIndex = 0; rowIndex < this.sheetData!.rowMetas.count; rowIndex++) {
       for (let colIndex = 0; colIndex < this.sheetData!.colMetas.count; colIndex++) {
         const addr = xy2expr(colIndex, rowIndex)
-        const cell: CellData = this.sheetData.cells[addr] || { addr, value: "" }
-        data[addr] = new Cell(cell, this, this.options)
+        if (!this.sheetData.cells[addr]) this.sheetData.cells[addr] = { addr, value: "" }
+        const cell: CellData = this.sheetData.cells[addr]
+        data[addr] = new Cell(cell, this, this.eventBus, this.options)
       }
     }
     return data

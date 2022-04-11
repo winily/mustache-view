@@ -1,11 +1,10 @@
-import utlis from "../lib/util";
-import Artboard from "./artboard";
+import utli from "../lib/util";
 import { Border, BorderBroad, toCoordinateGroup } from "./model/border.type";
 import { Box } from "./model/box.type";
 import CellData, { CellStyle } from "./model/cell.data";
 import Options from "./options";
 import { Text } from './model/text.type'
-import { emit, on } from "../lib/eventBus";
+import EventBus from "../lib/eventBus";
 import Sheet from "./sheet";
 
 export type Cells = { [key: string]: Cell }
@@ -31,6 +30,7 @@ export default class Cell {
   constructor(
     private readonly cellData: CellData,
     private readonly sheet: Sheet,
+    private readonly eventBus: EventBus,
     private readonly options: Options,
     x?: number,
     y?: number,
@@ -42,14 +42,14 @@ export default class Cell {
     this.width = width || null
     this.height = height || null
 
-    on("click-cell", addr => this.click(addr))
+    this.eventBus.on("click-cell", addr => this.click(addr))
   }
 
   setSize(size: number): Cell {
     if (!this.cellData.style) this.cellData.style = {}
     if (!this.cellData.style?.font) this.cellData.style!.font = { size: size }
     else this.cellData.style!.font!.size = size
-
+    this.eventBus.emit('cell-edited')
     this.sheet.redraw()
     return this
   }
@@ -71,6 +71,7 @@ export default class Cell {
 
   updateValue(value: string): Cell {
     this.cellData.value = value
+    this.eventBus.emit('cell-edited')
     return this
   }
 
@@ -117,10 +118,10 @@ export default class Cell {
   }
 
   render(): Cell {
-    utlis.assert(this.x !== null, "x has not been initialized and cannot be rendered!")
-    utlis.assert(this.y !== null, "y has not been initialized and cannot be rendered!")
-    utlis.assert(this.width !== null, "width has not been initialized and cannot be rendered!")
-    utlis.assert(this.height !== null, "height has not been initialized and cannot be rendered!")
+    utli.assert(this.x !== null, "x has not been initialized and cannot be rendered!")
+    utli.assert(this.y !== null, "y has not been initialized and cannot be rendered!")
+    utli.assert(this.width !== null, "width has not been initialized and cannot be rendered!")
+    utli.assert(this.height !== null, "height has not been initialized and cannot be rendered!")
 
     const box: Box = {
       x: this.x!, y: this.y!,
@@ -128,7 +129,7 @@ export default class Cell {
       backColor: this.cellData.style?.background?.color || this.options.defaultCellBackColor
     }
     this.sheet.artboard!.strokeBox(box)
-    if (utlis.isDefined(this.cellData.style?.border)) {
+    if (utli.isDefined(this.cellData.style?.border)) {
       const border: Border = {}
       const borderStyle = this.cellData.style?.border!
       if (borderStyle.top)
@@ -182,10 +183,10 @@ export default class Cell {
   }
 
   renderGrid(): Cell {
-    utlis.assert(this.x !== null, "x has not been initialized and cannot be rendered!")
-    utlis.assert(this.y !== null, "y has not been initialized and cannot be rendered!")
-    utlis.assert(this.width !== null, "width has not been initialized and cannot be rendered!")
-    utlis.assert(this.height !== null, "height has not been initialized and cannot be rendered!")
+    utli.assert(this.x !== null, "x has not been initialized and cannot be rendered!")
+    utli.assert(this.y !== null, "y has not been initialized and cannot be rendered!")
+    utli.assert(this.width !== null, "width has not been initialized and cannot be rendered!")
+    utli.assert(this.height !== null, "height has not been initialized and cannot be rendered!")
 
     this.sheet.artboard!.strokeBoxBorder({
       x: this.x!, y: this.y!,

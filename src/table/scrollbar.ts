@@ -1,5 +1,5 @@
 import Artboard from './artboard';
-import SheetData, { ColMeta, ColMetas, RowMeta, RowMetas } from './model/sheet.data';
+import SheetData, { ColMetas, RowMetas } from './model/sheet.data';
 import { BorderBroad } from './model/border.type'
 import { stringAt } from '../lib/util';
 import Options from './options';
@@ -11,15 +11,11 @@ export default class Scrollbar {
   public horizontalMeta: ColMetas = {}
   public verticalMeta: RowMetas = {}
 
-  // public horizontalBoundary: Array<{ col: ColMeta, x: number }> = []
-  // public verticalBoundary: Array<{ row: RowMeta, y: number }> = []
-
   constructor(
     private readonly artboard: Artboard,
     private readonly sheet: SheetData,
     private readonly options: Options
-  ) {
-  }
+  ) { }
 
 
   // 横方向

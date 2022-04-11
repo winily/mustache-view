@@ -1,6 +1,6 @@
-import utlis from "./util"
+import utli from "./util"
 
-type OnFunction = (...args: any[]) => void
+export type OnFunction = (...args: any[]) => void
 
 class Event {
   private readonly onList: Array<OnFunction> = []
@@ -22,12 +22,10 @@ class Event {
 
 type EventList = { [key: string]: Event }
 
-class EventBus {
+export default class EventBus {
   private static readonly eventBus: EventBus = new EventBus()
 
   private readonly events: EventList = {}
-
-  private constructor() { }
 
   emit(key: string, ...args: any[]): EventBus {
     this.events[key]?.emit(...args)
@@ -36,13 +34,13 @@ class EventBus {
   }
 
   on(key: string, fun: OnFunction) {
-    if (utlis.isDefined(this.events[key])) this.events[key].on(fun)
+    if (utli.isDefined(this.events[key])) this.events[key].on(fun)
     else this.events[key] = new Event(key).on(fun)
     return this
   }
 
   once(key: string, fun: OnFunction): EventBus {
-    if (utlis.isDefined(this.events[key])) this.events[key].on(fun)
+    if (utli.isDefined(this.events[key])) this.events[key].on(fun)
     else this.events[key] = new Event(key, true).on(fun)
     return this
   }
@@ -51,22 +49,4 @@ class EventBus {
     delete this.events[key]
     return this
   }
-
-  static getInstance() {
-    return this.eventBus
-  }
-}
-
-export const eventBus = EventBus.getInstance()
-
-export const on = (key: string, fun: OnFunction) => {
-  return eventBus.on(key, fun)
-}
-
-export const once = (key: string, fun: OnFunction) => {
-  return eventBus.once(key, fun)
-}
-
-export const emit = (key: string, ...args: any[]) => {
-  return eventBus.emit(key, ...args)
 }

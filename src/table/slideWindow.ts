@@ -1,5 +1,5 @@
-import { emit, eventBus } from "../lib/eventBus";
-import utlis, { expr2xy, stringAt, xy2expr } from "../lib/util";
+import EventBus from "../lib/eventBus";
+import utli, { expr2xy, xy2expr } from "../lib/util";
 import Artboard from "./artboard";
 import Cell, { Cells } from "./cell";
 import SheetData, { ColMetas, RowMeta, RowMetas } from "./model/sheet.data";
@@ -82,6 +82,7 @@ export default class SlideWindow {
     private readonly artboard: Artboard,
     private readonly sheetData: SheetData,
     private readonly cells: Cells,
+    private readonly eventBus: EventBus,
     private readonly options: Options
   ) {
     this.scrollbar = new Scrollbar(artboard, sheetData, options)
@@ -125,23 +126,24 @@ export default class SlideWindow {
 
   mouseDownMove(event: MouseEvent | any) {
     const { offsetX, offsetY } = event
-    if (utlis.isDefined(this.horizontalTargetKey)) {
+    if (utli.isDefined(this.horizontalTargetKey)) {
       const item = this.sheetData.colMetas[this.horizontalTargetKey!]
       const width = offsetX - (item.width + item.x! + this.options.scrollbarVerticalWidth)
       item.width += width
       if (item.width < this.options.cellMinWidth) item.width = this.options.cellMinWidth
       this.redraw()
+      this.eventBus.emit('col-resize')
       return
     }
-    if (utlis.isDefined(this.verticalTargetKey)) {
+    if (utli.isDefined(this.verticalTargetKey)) {
       const item = this.sheetData.rowMetas[this.verticalTargetKey!]
       const height = offsetY - (item.height + item.y! + this.options.scrollbarHorizontalHeight)
       item.height += height
       if (item.height < this.options.cellMinHeight) item.height = this.options.cellMinHeight
       this.redraw()
+      this.eventBus.emit('row-resize')
       return
     }
-    console.log(event, "mouseDownMove")
   }
 
   mousemove(event: MouseEvent | any) {
@@ -155,8 +157,7 @@ export default class SlideWindow {
           const item = this.scrollbar.horizontalMeta[key]
           return Math.abs(item.width + item.x! + this.options.scrollbarVerticalWidth - offsetX) <= 2
         })
-      console.log(targetKey)
-      if (!utlis.isDefined(targetKey)) return
+      if (!utli.isDefined(targetKey)) return
       this.sheet.cursor = 'col-resize'
       this.horizontalTargetKey = targetKey
       return
@@ -170,7 +171,7 @@ export default class SlideWindow {
           const item = this.scrollbar.verticalMeta[key]
           return Math.abs(item.height + item.y! + this.options.scrollbarHorizontalHeight - offsetY) <= 2
         })
-      if (!utlis.isDefined(targetKey)) return
+      if (!utli.isDefined(targetKey)) return
       this.sheet.cursor = 'row-resize'
       this.verticalTargetKey = targetKey
       return
@@ -198,7 +199,7 @@ export default class SlideWindow {
       })
     this.redraw()
     this.sheet.input.closeInput()
-    emit("click-cell", maxAddr, this.showCells[maxAddr])
+    this.eventBus.emit("click-cell", maxAddr, this.showCells[maxAddr])
   }
 
   resize() {
