@@ -31,10 +31,10 @@ export default class Table extends VirtualElement<'div'> {
     this.toolbar = new Toolbar(this.options)
     this.child(this.toolbar)
     this.toolbar.mountList(toolbarOptions)
+  }
 
-    window.getData = () => {
-      return this.tableData
-    }
+  getData(): TableData {
+    return this.tableData!
   }
 
   load(table: TableData): Table {
